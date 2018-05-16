@@ -1,0 +1,162 @@
+package main
+
+import (
+	//	"crypto/rand"
+	"crypto/x509"
+	// "crypto/x509/pkix"
+	"encoding/asn1"
+	//	"encoding/binary"
+	//	"encoding/csv"
+	"encoding/pem"
+	"fmt"
+	"github.com/jessevdk/go-flags"
+	"io/ioutil"
+	"log"
+	//	"math/big"
+	"os"
+	"time"
+	"strings"
+)
+
+var options struct {
+	Email string `short:"e" long:"email" description:"E-mail to locate in a cert" default:"" required:"false"`
+	Subject string`short:"s" long:"subject" description:"Subject substring to match" default:"" required:"false"`
+	CertPrefix  string `short:"p" long:"prefix" description:"Prefix of Cert file, PEM format" required:"true"`
+	CertDir string `short:"d" long:"directory" description:"Directory to search" required:"true"`
+	Verbose []bool `short:"v" long:"verbose" description:"Verbosity" required:"false"`
+	Extended []bool `short:"x" long:"extended" description:"Extended Output" required:"false"` 
+	LatestOnly []bool `short:"l" long:"latest" description:"Keep only latest certificate" required:"false"`
+}
+
+var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
+
+type certtab struct {
+	Cert *x509.Certificate
+	Issued time.Time
+	Email string
+	Revoke bool
+}
+
+func main() {
+
+	// Parse flags
+	_, err := flags.Parse(&options)
+	if err != nil {
+		os.Exit(1)
+	}
+
+
+	files,err := ioutil.ReadDir(options.CertDir)
+	if err != nil {
+		log.Fatal("Failed to read certificate directory: %s", err)
+	}
+
+	certs := []certtab{}
+	
+	for _, certFile := range files {
+
+		// Temporarily hold the filename that we are examining
+		tmpName :=  certFile.Name()
+
+		// Verify that the prefix matches
+		if strings.HasPrefix(tmpName,options.CertPrefix) {
+			
+			// Read cert file
+			raw, err := ioutil.ReadFile(options.CertDir + "/" + tmpName)
+			if err != nil {
+				log.Fatalf("failed to read certificate file: %s", err)
+			}
+			
+			// Read cert
+			testPem, _ := pem.Decode([]byte(raw))
+			if testPem == nil {
+				log.Fatalf("failed to read certificate file")
+			}
+			
+			// Parse certificate
+			testCert, err := x509.ParseCertificate(testPem.Bytes)
+			if err != nil {
+				log.Fatalf("failed to parse certificate: %s\n", err)
+			}
+
+			// Temporarily hold the Subject string from the certificate
+			tmpSubject := testCert.Subject.String()
+
+			// Look through the array of email addresses in the Cert for a Match
+			// then optionally look for the provided Subject substring in the Cert Subject field
+			for _,email := range testCert.EmailAddresses {
+				if (options.Email == "" || email == options.Email) &&
+					(options.Subject == "" || strings.Contains(tmpSubject,options.Subject)) {
+
+					// Everything matched, print out file name and go on to the next file
+					if len(options.Verbose) > 0 {
+						fmt.Printf("%s|%d|%d|%s|%s\n",
+							tmpName,
+							testCert.NotBefore.Unix(),
+							testCert.NotAfter.Unix(),
+							email,
+							tmpSubject)
+					}
+					certs = append(certs,
+						certtab{
+							Cert: testCert,
+							Issued: testCert.NotBefore,
+							Revoke: true,
+							Email: email,
+						})
+					break
+				}
+			}
+
+			
+			
+		}
+	}
+
+	// -- Check to see if the user wants to keep the latest issued certificate
+	
+	if len(options.LatestOnly)>0 {
+		latest := 0
+		latestIssued := time.Unix(0,0)
+		for i,c :=range certs {
+			if len(options.Verbose) > 0 {
+				fmt.Printf("? %X|%d\n",
+					c.Cert.SerialNumber,
+					c.Issued.Unix())
+			}
+
+			if c.Issued.After(latestIssued) {
+				if len(options.Verbose) > 0 {
+					fmt.Printf("?>%X|%d\n",
+						c.Cert.SerialNumber,
+						c.Issued.Unix())
+				}
+
+				latest = i
+				latestIssued = c.Issued
+			}
+		}
+		if len(options.Verbose) > 0 {
+			fmt.Printf("?*%X|%d\n",
+				certs[latest].Cert.SerialNumber,
+				certs[latest].Issued.Unix())
+		}
+		
+		certs[latest].Revoke = false
+	}
+
+	// -- Output the list of certificates in the form: filename,Serial,Now
+
+	for _, c := range certs {
+		
+		if c.Revoke {
+			fmt.Printf("%X,%s",c.Cert.SerialNumber,time.Now().Format("2006-01-02T15:04:05.000Z"))
+			if len(options.Extended)>0 {
+
+				fmt.Printf(",%s,%s,%d",c.Email,strings.Split(c.Cert.Subject.String(),",")[0],c.Issued.Unix())
+			}
+			fmt.Printf("\n");
+			
+		}
+	}
+}
