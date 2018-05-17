@@ -30,7 +30,7 @@ var options struct {
 	Locality           string `short:"L" long:"locality" description:"Comma separated Locality list"`
 	OrganizationalUnit string `short:"U" long:"organisational-unit" description:"Comma separated Organizational Unit list"`
 	Organization       string `short:"O" long:"organisation" description:"Comma separated Organization list"`
-	CommonName         string `short:"N" long:"common-name" description:"Country" required:"true"`
+	CommonName         string `short:"N" long:"common-name" description:"Common Name" required:"true"`
 
 	CrlUri      string `short:"d" long:"crl-distribution" description:"Comma separated CRL Distribution URI list" required:"false"`
 	CaUri       string `short:"i" long:"ca-issuers-distribution" description:"Comma separated CA Issuer Chains (p7c) list" required:"false"`
