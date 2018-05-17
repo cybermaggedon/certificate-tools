@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-//	"encoding/binary"
+	"encoding/binary"
 	"encoding/csv"
 	"encoding/pem"
 	"fmt"
@@ -22,7 +22,7 @@ var options struct {
 	KeyFile string `short:"k" long:"key" description:"CA private key, PEM format" required:"true"`
 	CaFile  string `short:"c" long:"ca-certificate" description:"CA cert file, PEM format" required:"true"`
 	RevFile string `short:"r" long:"revoked" description:"List of revoked certificates, form is SERIAL<space>TIME" required:"true"`
-//	BinaryOut bool `short:"b" long:"binary" description:"Output the CRL in binary form" default:"false" required:"false"`
+	BinaryOut bool `short:"b" long:"binary" description:"Output the CRL in binary form" required:"false"`
 }
 
 
@@ -101,7 +101,7 @@ func main() {
 
 		fmt.Sscanf(v[0], "%X", serial)
 
-		tm, _ := time.Parse("2006-01-02T15:04:05.000Z", v[1])
+		tm, _ := time.Parse(time.RFC3339, v[1])
 
 		revoked = append(revoked,
 			pkix.RevokedCertificate{
@@ -114,9 +114,9 @@ func main() {
 	// Generate a new CRL
 
 
-	
+	t := time.Now().UTC()
 	crl, err := caCert.CreateCRL(rand.Reader, priv, revoked,
-		time.Now(), time.Now().Add(100*24*time.Hour))
+		t, t.Add(100*24*time.Hour))
 	
 	if err != nil {
 		log.Fatalf("failed to generate CRL: %s\n",err);
@@ -124,14 +124,14 @@ func main() {
 	
 
 
-//	if options.BinaryOut {
-//		err = binary.Write(os.Stdout, binary.LittleEndian, crl)
-//	} else {
+	if options.BinaryOut {
+		err = binary.Write(os.Stdout, binary.LittleEndian, crl)
+	} else {
 		err = pem.Encode(os.Stdout, &pem.Block{
 			Type: "X509 CRL",
 			Bytes: crl,
 		})
-//	}
+	}
 	if err != nil {
 		log.Fatalf("failed to write CRL: %s\n",err);
 	}

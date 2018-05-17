@@ -22,18 +22,18 @@ var options struct {
 	Validity int64  `short:"v" long:"validity" description:"Certificate validity period (days)" default:"90"`
 	KeyFile  string `short:"k" long:"key" description:"CA Private key, PEM format" required:"true"`
 
-	EmailAddress       string `short:"E" long:"email" description:"Email address" required:"true"`
-	Hosts              string `short:"h" long:"hosts" desription:"Comma-separated list of hosts or IP addresses" default:""`
+	EmailAddress       string `short:"E" long:"email" description:"Comma separated Email Address list" required:"true"`
+	Hosts              string `short:"h" long:"hosts" desription:"Comma separated DNS name or IP addresse list" default:""`
 	
-	Country            string `short:"C" long:"country" description:"Country"`
-	Province           string `short:"P" long:"province" description:"Province"`
-	Locality           string `short:"L" long:"locality" description:"Locality"`
-	OrganizationalUnit string `short:"U" long:"organisational-unit" description:"Organizational Unit"`
-	Organization       string `short:"O" long:"organisation" description:"Organization"`
+	Country            string `short:"C" long:"country" description:"Comma separated Country list"`
+	Province           string `short:"P" long:"province" description:"Comma separated Province list"`
+	Locality           string `short:"L" long:"locality" description:"Comma separated Locality list"`
+	OrganizationalUnit string `short:"U" long:"organisational-unit" description:"Comma separated Organizational Unit list"`
+	Organization       string `short:"O" long:"organisation" description:"Comma separated Organization list"`
 	CommonName         string `short:"N" long:"common-name" description:"Country" required:"true"`
 
-	CrlUri      string `short:"d" long:"crl-distribution" description:"Comma separated list of CRL Distribution URIs" required:"false"`
-	CaUri       string `short:"i" long:"ca-issuers-distribution" description:"Comma separated list of CA Issuer Chains (p7c)" required:"false"`
+	CrlUri      string `short:"d" long:"crl-distribution" description:"Comma separated CRL Distribution URI list" required:"false"`
+	CaUri       string `short:"i" long:"ca-issuers-distribution" description:"Comma separated CA Issuer Chains (p7c) list" required:"false"`
 
 }
 
@@ -67,7 +67,7 @@ func main() {
 	}
 
 	// Certificate validity period starts now.
-	notBefore := time.Now()
+	notBefore := time.Now().UTC()
 
 	// Work out certificate expiry.
 	duration := time.Duration(options.Validity*24) * time.Hour
@@ -93,20 +93,21 @@ func main() {
 	// Create the certificate subject based on options.
 	subject := pkix.Name{}
 	if options.Country != "" {
-		subject.Country = []string{options.Country}
+		subject.Country = strings.Split(options.Country,",")
 	}
 	if options.Province != "" {
-		subject.Province = []string{options.Province}
+		subject.Province = strings.Split(options.Province,",")
 	}
 	if options.Locality != "" {
-		subject.Locality = []string{options.Locality}
+		subject.Locality = strings.Split(options.Locality,",")
 	}
 	if options.OrganizationalUnit != "" {
 		subject.OrganizationalUnit =
-			[]string{options.OrganizationalUnit}
+			strings.Split(options.OrganizationalUnit,",")
 	}
 	if options.Organization != "" {
-		subject.Organization = []string{options.Organization}
+		subject.Organization =
+			strings.Split(options.Organization,",")
 	}
 	if options.CommonName != "" {
 		subject.CommonName = options.CommonName
@@ -134,7 +135,7 @@ func main() {
 		ExtKeyUsage: []x509.ExtKeyUsage{},
 		BasicConstraintsValid: true,
 
-		EmailAddresses: []string{options.EmailAddress},
+		EmailAddresses: strings.Split(options.EmailAddress,","),
 		
 	}
 
@@ -162,20 +163,12 @@ func main() {
 
 	if options.CrlUri != "" {
 
-		uris := strings.Split(options.CrlUri,",")
-		for _, u := range uris {
-			template.CRLDistributionPoints = append(template.CRLDistributionPoints,u)
-		}
-
+		template.CRLDistributionPoints = strings.Split(options.CrlUri,",")
 	}
 
 	if options.CaUri != "" {
 
-		uris := strings.Split(options.CaUri,",")
-		for _, u := range uris {
-			template.IssuingCertificateURL = append(template.IssuingCertificateURL,u)
-		}
-		
+		template.IssuingCertificateURL = strings.Split(options.CaUri,",")
 	}
 
 

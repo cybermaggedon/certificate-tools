@@ -9,7 +9,7 @@ GODEPS = go/.uuid go/.goflags
 
 CERT_TOOLS_TAR = cert-tools.tar
             
-all: tar test
+all: godeps tar test
 
 %: %.go  
 #GOPATH Mods to enable linux build on MacOSX
@@ -31,7 +31,6 @@ go/.goflags:
 
 tar:    $(CERT_TOOLS_TAR)
 
-$(CERT_TOOLS): godeps
 
 $(CERT_TOOLS_TAR): $(CERT_TOOLS)
 	tar cvf $(CERT_TOOLS_TAR) $(CERT_TOOLS)

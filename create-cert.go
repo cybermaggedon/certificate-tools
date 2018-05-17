@@ -106,7 +106,7 @@ func main() {
 	}
 
 	// Work out certificate start time
-	notBefore := time.Now()
+	notBefore := time.Now().UTC()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to parse creation date: %s\n",
 			err)
@@ -197,10 +197,7 @@ func main() {
 
 	if options.CrlUri != "" {
 
-		uris := strings.Split(options.CrlUri,",")
-		for _, u := range uris {
-			template.CRLDistributionPoints = append(template.CRLDistributionPoints,u)
-		}
+		template.CRLDistributionPoints = strings.Split(options.CrlUri,",")
 
 	} else {
 
@@ -209,10 +206,7 @@ func main() {
 
 	if options.CaUri != "" {
 
-		uris := strings.Split(options.CaUri,",")
-		for _, u := range uris {
-			template.IssuingCertificateURL = append(template.IssuingCertificateURL,u)
-		}
+		template.IssuingCertificateURL = strings.Split(options.CaUri,",")
 		
 	} else {
 

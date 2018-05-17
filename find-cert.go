@@ -24,8 +24,8 @@ var options struct {
 	CertPrefix  string `short:"p" long:"prefix" description:"Prefix of Cert file, PEM format" required:"true"`
 	CertDir string `short:"d" long:"directory" description:"Directory to search" required:"true"`
 	Verbose []bool `short:"v" long:"verbose" description:"Verbosity" required:"false"`
-	Extended []bool `short:"x" long:"extended" description:"Extended Output" required:"false"` 
-	LatestOnly []bool `short:"l" long:"latest" description:"Keep only latest certificate" required:"false"`
+	Extended bool `short:"x" long:"extended" description:"Extended Output" required:"false"` 
+	ExceptLatest bool `short:"l" long:"latest" description:"Show all but latest certificate" required:"false"`
 }
 
 var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
@@ -115,21 +115,21 @@ func main() {
 
 	// -- Check to see if the user wants to keep the latest issued certificate
 	
-	if len(options.LatestOnly)>0 {
+	if options.ExceptLatest {
 		latest := 0
 		latestIssued := time.Unix(0,0)
 		for i,c :=range certs {
 			if len(options.Verbose) > 0 {
-				fmt.Printf("? %X|%d\n",
+				fmt.Printf("? %X|%s\n",
 					c.Cert.SerialNumber,
-					c.Issued.Unix())
+					c.Issued.UTC().Format(time.RFC3339))
 			}
 
 			if c.Issued.After(latestIssued) {
 				if len(options.Verbose) > 0 {
-					fmt.Printf("?>%X|%d\n",
+					fmt.Printf("?>%X|%s\n",
 						c.Cert.SerialNumber,
-						c.Issued.Unix())
+						c.Issued.UTC().Format(time.RFC3339))
 				}
 
 				latest = i
@@ -137,9 +137,9 @@ func main() {
 			}
 		}
 		if len(options.Verbose) > 0 {
-			fmt.Printf("?*%X|%d\n",
+			fmt.Printf("?*%X|%s\n",
 				certs[latest].Cert.SerialNumber,
-				certs[latest].Issued.Unix())
+				certs[latest].Issued.UTC().Format(time.RFC3339))
 		}
 		
 		certs[latest].Revoke = false
@@ -150,12 +150,14 @@ func main() {
 	for _, c := range certs {
 		
 		if c.Revoke {
-			fmt.Printf("%X,%s",c.Cert.SerialNumber,time.Now().Format("2006-01-02T15:04:05.000Z"))
-			if len(options.Extended)>0 {
 
-				fmt.Printf(",%s,%s,%d",c.Email,strings.Split(c.Cert.Subject.String(),",")[0],c.Issued.Unix())
+			if options.Extended {
+				fmt.Printf("%016X,%s,%s,%s,%s,%s\n",c.Cert.SerialNumber.Bytes(),c.Email,
+					c.Cert.Subject.Organization, c.Cert.Subject.OrganizationalUnit,
+					c.Cert.Subject.CommonName,c.Issued.UTC().Format(time.RFC3339))
+			} else {
+				fmt.Printf("%016X,%s\n",c.Cert.SerialNumber.Bytes(),time.Now().UTC().Format(time.RFC3339))
 			}
-			fmt.Printf("\n");
 			
 		}
 	}

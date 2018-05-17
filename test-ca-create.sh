@@ -55,7 +55,8 @@ openssl verify -CAfile chain.pem baduser.cert || exit 1
 ../create-crl -k root.key -c root.pem -r /dev/null > root.crl || exit 1
 openssl crl -verify -CAfile root.pem -in root.crl -noout || exit 1
 
-echo $(openssl x509 -in baduser.cert -serial -noout | cut -f2 -d=),2018-05-08T19:34:05.940Z > revoke_list
+
+../find-cert -d . -p baduser.cert  > revoke_list
 ../create-crl -k ca1.key -c ca1.pem -r revoke_list >  ca1.crl || exit 1
 openssl crl -verify -CAfile ca1.pem -in ca1.crl -noout || exit 1
 

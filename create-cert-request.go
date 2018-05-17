@@ -17,14 +17,14 @@ import (
 var options struct {
 	KeyFile string `short:"k" long:"key" description:"New cert private key, PEM format" required:"true"`
 	
-	Hosts   string `short:"h" long:"hosts" desription:"Comma-separated list of hosts or IP addresses" default:""`
-	EmailAddress       string `short:"E" long:"email" description:"Email address" required:"true"`
+	Hosts   string `short:"h" long:"hosts" desription:"Comma separated DNS name or IP address list" default:""`
+	EmailAddress       string `short:"E" long:"email" description:"Comma separated Email address list" required:"true"`
 	
-	Country            string `short:"C" long:"country" description:"Country"`
-	Province           string `short:"P" long:"province" description:"Province"`
-	Locality           string `short:"L" long:"locality" description:"Locality"`
-	OrganizationalUnit string `short:"U" long:"organisational-unit" description:"Organizational Unit"`
-	Organization       string `short:"O" long:"organisation" description:"Organization"`
+	Country            string `short:"C" long:"country" description:"Comma separated Country list"`
+	Province           string `short:"P" long:"province" description:"Comma separated Province list"`
+	Locality           string `short:"L" long:"locality" description:"Comma separated Locality list"`
+	OrganizationalUnit string `short:"U" long:"organisational-unit" description:"Comma separated Organizational Unit list"`
+	Organization       string `short:"O" long:"organisation" description:"Comma separated Organization list"`
 	CommonName         string `short:"N" long:"common-name" description:"Common Name" required:"true"`
 }
 
@@ -60,20 +60,20 @@ func main() {
 	// Create a certificate subject and populate based on fields.
 	subject := pkix.Name{}
 	if options.Country != "" {
-		subject.Country = []string{options.Country}
+		subject.Country = strings.Split(options.Country,",")
 	}
 	if options.Province != "" {
-		subject.Province = []string{options.Province}
+		subject.Province = strings.Split(options.Province,",")
 	}
 	if options.Locality != "" {
-		subject.Locality = []string{options.Locality}
+		subject.Locality = strings.Split(options.Locality,",")
 	}
 	if options.OrganizationalUnit != "" {
-		subject.OrganizationalUnit =
-			[]string{options.OrganizationalUnit}
+		subject.OrganizationalUnit = 
+			strings.Split(options.OrganizationalUnit,",")
 	}
 	if options.Organization != "" {
-		subject.Organization = []string{options.Organization}
+		subject.Organization = strings.Split(options.Organization,",")
 	}
 	if options.CommonName != "" {
 		subject.CommonName = options.CommonName
@@ -83,7 +83,7 @@ func main() {
 	template := x509.CertificateRequest{
 		Subject:            subject,
 
-		EmailAddresses:     []string{options.EmailAddress},
+		EmailAddresses:     strings.Split(options.EmailAddress,","),
 		SignatureAlgorithm: x509.ECDSAWithSHA512,
 	}
 
