@@ -5,9 +5,11 @@ CERT_TOOLS = create-cert create-cert-request \
 	create-ca-cert create-crl create-key\
 	find-cert
 
-GODEPS= go/.uuid go/.goflags
+GODEPS = go/.uuid go/.goflags
+
+CERT_TOOLS_TAR = cert-tools.tar
             
-all: godeps $(CERT_TOOLS)
+all: tar test
 
 %: %.go  
 #GOPATH Mods to enable linux build on MacOSX
@@ -27,6 +29,17 @@ go/.goflags:
 	GOPATH=$$(pwd)/go go get github.com/jessevdk/go-flags
 	touch $@
 
+tar:    $(CERT_TOOLS_TAR)
+
+$(CERT_TOOLS): godeps
+
+$(CERT_TOOLS_TAR): $(CERT_TOOLS)
+	tar cvf $(CERT_TOOLS_TAR) $(CERT_TOOLS)
+
 clean:
-	rm -rf ${CERT_TOOLS} 
+	rm -rf $(CERT_TOOLS) $(CERT_TOOLS_TAR) 
 	rm -rf go
+	rm -rf test-ca
+
+test:  $(CERT_TOOLS) 
+	./test-ca-create.sh
