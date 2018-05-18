@@ -82,7 +82,9 @@ func main() {
 			}
 
 			// Temporarily hold the Subject string from the certificate
-			tmpSubject := testCert.Subject.String()
+			//tmpSubject := testCert.Subject.String()
+			tmpSubject := testCert.Subject.ToRDNSequence().String()
+			
 
 			// Look through the array of email addresses in the Cert for a Match
 			// then optionally look for the provided Subject substring in the Cert Subject field
