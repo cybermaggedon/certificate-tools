@@ -11,20 +11,20 @@ import (
 	"log"
 	"net"
 	"os"
-	"strings"
 )
 
 var options struct {
 	KeyFile string `short:"k" long:"key" description:"New cert private key, PEM format" required:"true"`
 	
-	Hosts   string `short:"h" long:"hosts" desription:"Comma separated DNS name or IP address list" default:""`
-	EmailAddress       string `short:"E" long:"email" description:"Comma separated Email address list" required:"true"`
+	Hosts              []string `short:"h" long:"hosts" description:"DNS name or IP address"`
+	EmailAddress       []string `short:"E" long:"email" description:"Email address" required:"true"`
 	
-	Country            string `short:"C" long:"country" description:"Comma separated Country list"`
-	Province           string `short:"P" long:"province" description:"Comma separated Province list"`
-	Locality           string `short:"L" long:"locality" description:"Comma separated Locality list"`
-	OrganizationalUnit string `short:"U" long:"organisational-unit" description:"Comma separated Organizational Unit list"`
-	Organization       string `short:"O" long:"organisation" description:"Comma separated Organization list"`
+	Country            []string `short:"C" long:"country" description:"Country"`
+	Province           []string `short:"P" long:"province" description:"Province"`
+	Locality           []string `short:"L" long:"locality" description:"Locality"`
+	OrganizationalUnit []string `short:"U" long:"organisational-unit" description:"Organizational Unit"`
+	Organization       []string `short:"O" long:"organisation" description:"Organization"`
+	
 	CommonName         string `short:"N" long:"common-name" description:"Common Name" required:"true"`
 }
 
@@ -59,21 +59,21 @@ func main() {
 
 	// Create a certificate subject and populate based on fields.
 	subject := pkix.Name{}
-	if options.Country != "" {
-		subject.Country = strings.Split(options.Country,",")
+	if len(options.Country) > 0 {
+		subject.Country = options.Country
 	}
-	if options.Province != "" {
-		subject.Province = strings.Split(options.Province,",")
+	if len(options.Province) > 0 {
+		subject.Province = options.Province
 	}
-	if options.Locality != "" {
-		subject.Locality = strings.Split(options.Locality,",")
+	if len(options.Locality) > 0 {
+		subject.Locality = options.Locality
 	}
-	if options.OrganizationalUnit != "" {
+	if len(options.OrganizationalUnit) > 0 {
 		subject.OrganizationalUnit = 
-			strings.Split(options.OrganizationalUnit,",")
+			options.OrganizationalUnit
 	}
-	if options.Organization != "" {
-		subject.Organization = strings.Split(options.Organization,",")
+	if len(options.Organization) > 0 {
+		subject.Organization = options.Organization
 	}
 	if options.CommonName != "" {
 		subject.CommonName = options.CommonName
@@ -83,14 +83,14 @@ func main() {
 	template := x509.CertificateRequest{
 		Subject:            subject,
 
-		EmailAddresses:     strings.Split(options.EmailAddress,","),
+		EmailAddresses:     options.EmailAddress,
+		
 		SignatureAlgorithm: x509.ECDSAWithSHA512,
 	}
 
 	// Populate optional hosts field for DNS names and IP addresses.
-	if options.Hosts != "" {
-		hosts := strings.Split(options.Hosts, ",")
-		for _, h := range hosts {
+	if len(options.Hosts) > 0 {
+		for _, h := range options.Hosts {
 			if ip := net.ParseIP(h); ip != nil {
 				template.IPAddresses =
 					append(template.IPAddresses, ip)

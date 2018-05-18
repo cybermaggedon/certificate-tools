@@ -14,21 +14,22 @@ import (
 	"math/big"
 	"os"
 	"time"
-	"strings"
 )
 
 var options struct {
 	Validity    int64  `short:"v" long:"validity" description:"Certificate validity period (days)" default:"90"`
+	
 	KeyFile     string `short:"k" long:"key" description:"CA private key, PEM format" required:"true"`
 	CaFile      string `short:"c" long:"ca-certificate" description:"CA cert file, PEM format" required:"true"`
 	CsrFile     string `short:"r" long:"certificate-request" description:"CSR file, PEM format" required:"true"`
-	ServerUsage bool   `short:"S" long:"server-usage" description:"Specifies to create a server certificate"`
-	ClientUsage bool   `short:"C" long:"client-usage" description:"Specifies to create a client certificate"`
-	CaUsage     bool   `short:"A" long:"ca-usage" description:"Specifies to create a CA certificate"`
-	CRLUsage    bool   `short:"R" long:"crl-usage" description:"Specifies to create a CRL issuer certificate"`
 	
-	CrlUri      string `short:"d" long:"crl-distribution" description:"Comma separated list of CRL Distribution URIs" required:"false"`
-	CaUri       string `short:"i" long:"ca-issuers-distribution" description:"Comma separated list of CA Issuer Chains (p7c)" required:"false"`
+	ServerUsage bool   `short:"S" long:"server-usage" description:"Create a server certificate"`
+	ClientUsage bool   `short:"C" long:"client-usage" description:"Create a client certificate"`
+	CaUsage     bool   `short:"A" long:"ca-usage" description:"Create a CA certificate"`
+	CRLUsage    bool   `short:"R" long:"crl-usage" description:"Create a CRL issuer certificate"`
+	
+	CrlUri      []string `short:"d" long:"crl-distribution" description:"CRL Distribution URI" required:"false"`
+	CaUri       []string `short:"i" long:"ca-issuers-distribution" description:"CA Issuer Chain (p7c)" required:"false"`
 }
 
 var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
@@ -152,7 +153,7 @@ func main() {
 		KeyUsage: x509.KeyUsageDigitalSignature,
 		
 		ExtKeyUsage: []x509.ExtKeyUsage{},
-		BasicConstraintsValid: true,
+
 
 
 		DNSNames:       clientCSR.DNSNames,
@@ -186,8 +187,10 @@ func main() {
 
 	// Set CA attributes in certificate if required.
 	if options.CaUsage {
+		template.BasicConstraintsValid = true
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
+		template.KeyUsage |= x509.KeyUsageCRLSign
 	}
 
 	// Set CRL attributes in certificate if required
@@ -195,18 +198,18 @@ func main() {
 		template.KeyUsage |= x509.KeyUsageCRLSign
 	}
 
-	if options.CrlUri != "" {
+	if len(options.CrlUri) > 0 {
 
-		template.CRLDistributionPoints = strings.Split(options.CrlUri,",")
+		template.CRLDistributionPoints = options.CrlUri
 
 	} else {
 
 		template.CRLDistributionPoints = caCert.CRLDistributionPoints
 	}
 
-	if options.CaUri != "" {
+	if len(options.CaUri) > 0 {
 
-		template.IssuingCertificateURL = strings.Split(options.CaUri,",")
+		template.IssuingCertificateURL = options.CaUri
 		
 	} else {
 

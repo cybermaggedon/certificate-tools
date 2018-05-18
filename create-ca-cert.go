@@ -14,7 +14,6 @@ import (
 	"math/big"
 	"net"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -22,18 +21,19 @@ var options struct {
 	Validity int64  `short:"v" long:"validity" description:"Certificate validity period (days)" default:"90"`
 	KeyFile  string `short:"k" long:"key" description:"CA Private key, PEM format" required:"true"`
 
-	EmailAddress       string `short:"E" long:"email" description:"Comma separated Email Address list" required:"true"`
-	Hosts              string `short:"h" long:"hosts" desription:"Comma separated DNS name or IP addresse list" default:""`
+	EmailAddress       []string `short:"E" long:"email" description:"Email Address" required:"true"`
 	
-	Country            string `short:"C" long:"country" description:"Comma separated Country list"`
-	Province           string `short:"P" long:"province" description:"Comma separated Province list"`
-	Locality           string `short:"L" long:"locality" description:"Comma separated Locality list"`
-	OrganizationalUnit string `short:"U" long:"organisational-unit" description:"Comma separated Organizational Unit list"`
-	Organization       string `short:"O" long:"organisation" description:"Comma separated Organization list"`
+	Hosts              []string `short:"h" long:"hosts" description:"DNS name or IP addresse"`
+	
+	Country            []string `short:"C" long:"country" description:"Country"`
+	Province           []string `short:"P" long:"province" description:"Province"`
+	Locality           []string `short:"L" long:"locality" description:"Locality"`
+	OrganizationalUnit []string `short:"U" long:"organisational-unit" description:"Organizational Unit"`
+	Organization       []string `short:"O" long:"organisation" description:"Organization"`
 	CommonName         string `short:"N" long:"common-name" description:"Common Name" required:"true"`
 
-	CrlUri      string `short:"d" long:"crl-distribution" description:"Comma separated CRL Distribution URI list" required:"false"`
-	CaUri       string `short:"i" long:"ca-issuers-distribution" description:"Comma separated CA Issuer Chains (p7c) list" required:"false"`
+	CrlUri      []string `short:"d" long:"crl-distribution" description:"CRL Distribution URI" required:"false"`
+	CaUri       []string `short:"i" long:"ca-issuers-distribution" description:"CA Issuer Chains (p7c)" required:"false"`
 
 }
 
@@ -92,22 +92,22 @@ func main() {
 	
 	// Create the certificate subject based on options.
 	subject := pkix.Name{}
-	if options.Country != "" {
-		subject.Country = strings.Split(options.Country,",")
+	if len(options.Country) > 0 {
+		subject.Country = options.Country
 	}
-	if options.Province != "" {
-		subject.Province = strings.Split(options.Province,",")
+	if len(options.Province) > 0 {
+		subject.Province = options.Province
 	}
-	if options.Locality != "" {
-		subject.Locality = strings.Split(options.Locality,",")
+	if len(options.Locality) > 0 {
+		subject.Locality = options.Locality
 	}
-	if options.OrganizationalUnit != "" {
+	if len(options.OrganizationalUnit) > 0 {
 		subject.OrganizationalUnit =
-			strings.Split(options.OrganizationalUnit,",")
+			options.OrganizationalUnit
 	}
-	if options.Organization != "" {
+	if len(options.Organization) > 0 {
 		subject.Organization =
-			strings.Split(options.Organization,",")
+			options.Organization
 	}
 	if options.CommonName != "" {
 		subject.CommonName = options.CommonName
@@ -135,14 +135,13 @@ func main() {
 		ExtKeyUsage: []x509.ExtKeyUsage{},
 		BasicConstraintsValid: true,
 
-		EmailAddresses: strings.Split(options.EmailAddress,","),
+		EmailAddresses: options.EmailAddress,
 		
 	}
 
 	// Add optional hosts containing IP address and DNS names.
-	if options.Hosts != "" {
-		hosts := strings.Split(options.Hosts, ",")
-		for _, h := range hosts {
+	if len(options.Hosts) > 0 {
+		for _, h := range options.Hosts {
 			if ip := net.ParseIP(h); ip != nil {
 				template.IPAddresses =
 					append(template.IPAddresses, ip)
@@ -151,6 +150,7 @@ func main() {
 			}
 		}
 	}
+
 
 	pkix, err :=  x509.MarshalPKIXPublicKey(key.Public())
 	if err != nil {
@@ -161,14 +161,14 @@ func main() {
 	template.SubjectKeyId = pkixSum[:]
 	
 
-	if options.CrlUri != "" {
+	if len(options.CrlUri) > 0 {
 
-		template.CRLDistributionPoints = strings.Split(options.CrlUri,",")
+		template.CRLDistributionPoints = options.CrlUri
 	}
 
-	if options.CaUri != "" {
+	if len(options.CaUri) > 0 {
 
-		template.IssuingCertificateURL = strings.Split(options.CaUri,",")
+		template.IssuingCertificateURL = options.CaUri
 	}
 
 
