@@ -3,7 +3,7 @@ package main
 import (
 	//	"crypto/rand"
 	"crypto/x509"
-	//"crypto/x509/pkix"
+	"crypto/x509/pkix"
 	"encoding/asn1"
 	//	"encoding/binary"
 	//	"encoding/csv"
@@ -36,6 +36,37 @@ type certtab struct {
 	Issued time.Time
 	Email string
 	Revoke bool
+}
+
+//type Name struct {
+//	Country, Organization, OrganizationalUnit []string
+//	Locality, Province                        []string
+//	StreetAddress, PostalCode                 []string
+//	SerialNumber, CommonName                  string
+
+//	Names      []AttributeTypeAndValue
+//	ExtraNames []AttributeTypeAndValue
+//}
+
+func stringListContains(l []string, s string) bool {
+	for _, le := range l {
+		if strings.Contains(le,s) {
+			return true
+		}
+	}
+	return false
+}
+
+func nameContains(n pkix.Name, s string) bool {
+
+	return 	strings.Contains(n.CommonName,s) ||
+		stringListContains(n.OrganizationalUnit,s) ||
+		stringListContains(n.Organization,s) ||
+		stringListContains(n.Country,s) ||
+		stringListContains(n.Locality,s) ||
+		stringListContains(n.Province,s) ||
+		stringListContains(n.PostalCode,s) ||
+		stringListContains(n.StreetAddress,s)
 }
 
 func main() {
@@ -81,25 +112,20 @@ func main() {
 				log.Fatalf("failed to parse certificate: %s\n", err)
 			}
 
-			// Temporarily hold the Subject string from the certificate
-			tmpSubject := testCert.Subject.String()
-			//tmpSubject := testCert.Subject.ToRDNSequence().String()
-			
 
 			// Look through the array of email addresses in the Cert for a Match
 			// then optionally look for the provided Subject substring in the Cert Subject field
 			for _,email := range testCert.EmailAddresses {
 				if (options.Email == "" || email == options.Email) &&
-					(options.Subject == "" || strings.Contains(tmpSubject,options.Subject)) {
+					(options.Subject == "" || nameContains(testCert.Subject,options.Subject)) {
 
 					// Everything matched, print out file name and go on to the next file
 					if len(options.Verbose) > 0 {
-						fmt.Printf("%s|%d|%d|%s|%s\n",
+						fmt.Printf("%s|%d|%d|%s\n",
 							tmpName,
 							testCert.NotBefore.Unix(),
 							testCert.NotAfter.Unix(),
-							email,
-							tmpSubject)
+							email)
 					}
 					certMap[email] = append(certMap[email],
 						certtab{
