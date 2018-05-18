@@ -8,7 +8,7 @@ CERT_TOOLS = create-cert create-cert-request \
 GODEPS = go/.uuid go/.goflags
 
 CERT_TOOLS_TAR = cert-tools.tar
-            
+
 all: godeps tar test
 
 %: %.go  
@@ -17,6 +17,7 @@ all: godeps tar test
 	GOPATH=$$(pwd)/go go build $< ${CORE}
 
 go:
+	go version
 	mkdir go
 
 godeps: go ${GODEPS}
