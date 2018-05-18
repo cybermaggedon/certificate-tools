@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rand"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"crypto/sha256"
 	"encoding/asn1"
 	"encoding/pem"
@@ -163,13 +164,13 @@ func main() {
 
 	}
 
-	pkix, err :=  x509.MarshalPKIXPublicKey(template.PublicKey)
+	pk, err :=  x509.MarshalPKIXPublicKey(template.PublicKey)
 	if err != nil {
 		log.Fatalf("failed to get Public Key bytes: %s", err)
 	}
 
-	pkixSum := sha256.Sum256(pkix)
-	template.SubjectKeyId = pkixSum[:]
+	pkSum := sha256.Sum256(pk)
+	template.SubjectKeyId = pkSum[:]
 	
 	// Add server usage if required
 	if options.ServerUsage {
@@ -183,6 +184,15 @@ func main() {
 		template.ExtKeyUsage = append(template.ExtKeyUsage,
 			x509.ExtKeyUsageClientAuth)
 		template.KeyUsage |= x509.KeyUsageKeyEncipherment
+
+
+		rawSubj := clientCSR.Subject.ToRDNSequence()
+		rawSubj = append(rawSubj, []pkix.AttributeTypeAndValue{
+			{Type: oidEmailAddress, Value: clientCSR.EmailAddresses[0]},
+		})
+		asn1Subj, _ := asn1.Marshal(rawSubj)
+
+		template.RawSubject = asn1Subj
 	}
 
 	// Set CA attributes in certificate if required.
