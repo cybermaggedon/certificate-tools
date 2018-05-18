@@ -17,10 +17,10 @@ all: godeps tar test
 	GOPATH=$$(pwd)/go go build $< ${CORE}
 
 go:
-	go version
 	mkdir go
 
 godeps: go ${GODEPS}
+	go version
 
 go/.uuid:
 	GOPATH=$$(pwd)/go go get github.com/google/uuid
