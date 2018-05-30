@@ -91,7 +91,8 @@ func main() {
 	// Populate optional hosts field for DNS names and IP addresses.
 	if len(options.Hosts) > 0 {
 		for _, h := range options.Hosts {
-			if ip := net.ParseIP(h); ip != nil {
+			ip := net.ParseIP(h)
+            if ip != nil {
 				template.IPAddresses =
 					append(template.IPAddresses, ip)
 			} else {
