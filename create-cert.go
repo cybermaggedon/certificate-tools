@@ -155,6 +155,8 @@ func main() {
 		
 		ExtKeyUsage: []x509.ExtKeyUsage{},
 
+		BasicConstraintsValid: true,
+		IsCA: false,
 
 
 		DNSNames:       clientCSR.DNSNames,
@@ -197,7 +199,6 @@ func main() {
 
 	// Set CA attributes in certificate if required.
 	if options.CaUsage {
-		template.BasicConstraintsValid = true
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 		template.KeyUsage |= x509.KeyUsageCRLSign
