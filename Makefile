@@ -5,7 +5,7 @@ CERT_TOOLS = create-cert create-cert-request \
 	create-ca-cert create-crl create-key\
 	find-cert create-rand
 
-GODEPS = go/.uuid go/.goflags go/.gopop
+GODEPS = go/.uuid go/.goflags 
 
 CERT_TOOLS_TAR = cert-tools.tar
 
@@ -28,10 +28,6 @@ go/.uuid:
 
 go/.goflags:
 	GOPATH=$$(pwd)/go go get github.com/jessevdk/go-flags
-	touch $@
-
-go/.gopop:
-	GOPATH=$$(pwd)/go go get github.com/tmthrgd/go-popcount
 	touch $@
 
 tar:    $(CERT_TOOLS_TAR)
