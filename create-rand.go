@@ -4,6 +4,7 @@ import (
 
 	"crypto/rand"
 	"github.com/jessevdk/go-flags"
+    "github.com/tmthrgd/go-popcount"
 	"os"
     "log"
     "fmt"
@@ -25,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-    var one,zero int = 0,0
+    var one,zero uint64 = 0,0
     
     randBlock := make([]byte,options.BlockSize)
     for i := 0; i< options.NumBlocks; i = i+1 {
@@ -40,20 +41,18 @@ func main() {
         }
 
 
-        for j:=0;j<numRandBytes;j+=1 {
-            if options.Verbose {
+        count := popcount.CountBytes(randBlock)
+
+        one = one + count
+        zero = zero + (uint64(options.BlockSize*8)-count)
+        
+        if options.Verbose {
+
+            for j:=0;j<numRandBytes;j+=1 {
+
                 fmt.Fprintf(os.Stderr, "%02x ",randBlock[j])
             }
             
-            for p:=1 ; p < 256; p = p << 1 {
-                if (byte(p) & randBlock[j])!=0 {
-                    one = one + 1
-                } else {
-                    zero = zero + 1
-                }
-            }
-        }
-        if options.Verbose {
             fmt.Fprintf(os.Stderr,"\n")
         }
         
@@ -68,6 +67,10 @@ func main() {
 
     // Quick Entropy Check
 
+    if options.Verbose {
+        fmt.Fprintf(os.Stderr,"Entropy Check: %d %d %d %d\n",one,zero, one*100/zero, zero*100/one)
+    }
+    
     if one==0 || zero==0 || (one/zero != 1 && zero/one != 1) { 
         fmt.Fprintf(os.Stderr,"Entropy Check Failed: %d %d %d %d\n",one,zero, one*100/zero, zero*100/one)
         fmt.Fprintf(os.Stdout,"FAILED")
