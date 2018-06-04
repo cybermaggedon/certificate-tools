@@ -3,7 +3,7 @@ VERSION=$(shell git describe | sed 's/^v//')
 
 CERT_TOOLS = create-cert create-cert-request \
 	create-ca-cert create-crl create-key\
-	find-cert
+	find-cert create-rand
 
 GODEPS = go/.uuid go/.goflags
 
