@@ -65,4 +65,12 @@ cat chain.pem root.crl ca1.crl > crlchain.pem || exit 1
 openssl verify -crl_check -CAfile crlchain.pem testuser.cert || exit 1
 openssl verify -crl_check -CAfile crlchain.pem baduser.cert  && exit 1
 
+# Test create-rand
+N=$(../create-rand -b 16 -c 64 | wc -c | sed -e"s/ //g")
+if [ "$N" != "1024" ]; then
+ echo "create-rand: failed $N != 1024"
+ exit 1
+else 
+ echo "create-rand: OK"
+fi 
 exit 0
