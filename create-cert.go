@@ -26,6 +26,7 @@ var options struct {
 	
 	ServerUsage bool   `short:"S" long:"server-usage" description:"Create a server certificate"`
 	ClientUsage bool   `short:"C" long:"client-usage" description:"Create a client certificate"`
+	CodeSigning bool   `short:"N" long:"code-signing" description:"Create a code signing certificate"`
 	CaUsage     bool   `short:"A" long:"ca-usage" description:"Create a CA certificate"`
 	CRLUsage    bool   `short:"R" long:"crl-usage" description:"Create a CRL issuer certificate"`
 	
@@ -187,6 +188,20 @@ func main() {
 			x509.ExtKeyUsageClientAuth)
 		template.KeyUsage |= x509.KeyUsageKeyEncipherment
 
+		rawSubj := clientCSR.Subject.ToRDNSequence()
+		rawSubj = append(rawSubj, []pkix.AttributeTypeAndValue{
+			{Type: oidEmailAddress, Value: clientCSR.EmailAddresses[0]},
+		})
+		asn1Subj, _ := asn1.Marshal(rawSubj)
+
+		template.RawSubject = asn1Subj
+	}
+
+	// Add client usage if required
+	if options.CodeSigning {
+		template.ExtKeyUsage = append(template.ExtKeyUsage,
+			x509.ExtKeyUsageCodeSigning)
+		template.KeyUsage |= x509.KeyUsageKeyEncipherment
 
 		rawSubj := clientCSR.Subject.ToRDNSequence()
 		rawSubj = append(rawSubj, []pkix.AttributeTypeAndValue{
