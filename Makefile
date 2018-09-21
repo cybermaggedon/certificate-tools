@@ -11,10 +11,12 @@ CERT_TOOLS_TAR = cert-tools.tar
 
 all: godeps tar test
 
-%: %.go  
+# %: %.go  
 #GOPATH Mods to enable linux build on MacOSX
-#	GOPATH=$$(pwd)/go GOOS=linux GOARCH=amd64 go build $< ${CORE}
-	GOPATH=$$(pwd)/go go build $< ${CORE}
+# 	GOPATH=$$(pwd)/go go build $<
+
+${CERT_TOOLS}: %: cmd/%/main.go
+	GOPATH=$$(pwd)/go go build -o $@ $<
 
 go:
 	mkdir go
