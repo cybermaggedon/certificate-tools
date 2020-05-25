@@ -16,7 +16,7 @@ import (
 var options struct {
 	KeyFile string `short:"k" long:"key" description:"New cert private key, PEM format" required:"true"`
 	
-	Hosts              []string `short:"h" long:"hosts" description:"DNS name or IP address"`
+	Hosts              []string `short:"H" long:"hosts" description:"DNS name or IP address"`
 	EmailAddress       []string `short:"E" long:"email" description:"Email address" required:"true"`
 	
 	Country            []string `short:"C" long:"country" description:"Country"`

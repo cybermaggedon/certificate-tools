@@ -23,7 +23,7 @@ var options struct {
 
 	EmailAddress       []string `short:"E" long:"email" description:"Email Address" required:"true"`
 	
-	Hosts              []string `short:"h" long:"hosts" description:"DNS name or IP addresse"`
+	Hosts              []string `short:"H" long:"hosts" description:"DNS name or IP addresse"`
 	
 	Country            []string `short:"C" long:"country" description:"Country"`
 	Province           []string `short:"P" long:"province" description:"Province"`
