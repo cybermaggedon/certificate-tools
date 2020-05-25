@@ -80,7 +80,7 @@ func main() {
 
 	files,err := ioutil.ReadDir(options.CertDir)
 	if err != nil {
-		log.Fatal("Failed to read certificate directory: %s", err)
+		log.Fatalf("Failed to read certificate directory: %s", err)
 	}
 
 	certMap := map[string][]certtab{}
